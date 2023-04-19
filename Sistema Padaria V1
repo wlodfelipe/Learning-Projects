@@ -1,0 +1,127 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <locale.h>
+
+int main()
+{
+    setlocale(LC_ALL, "Portuguese");
+
+    float valor, precototal, precofinal, valorparcela, variacao, valorpago;
+    int item, qntd, pagamento, parcelas;
+
+    printf("|----------------------------------|\n");
+    printf("|Código|     Nome       |   Preço  |\n");
+    printf("|------|----------------|----------|\n");
+    printf("|  1   | Pão de forma   | (R$7,50) |\n");
+    printf("|  2   | Pão de Centeio | (R$8,69) |\n");
+    printf("|  3   | Broa de Milho  | (R$5,00) |\n");
+    printf("|  4   | Sonho          | (R$4,50) |\n");
+    printf("|  5   | Tubaína        | (R$3,25) |\n");
+    printf("|----------------------------------|\n");
+
+    printf("\nBem vindo a Padaria da Berenice. Selecione apenas um item.\n-> ");
+
+    scanf("%d",&item);
+    if(item < 1 || item > 5) // se a escolha do item não for válida, o programa se encerra
+    {
+        printf("Inválido! Insira um código entre 1 e 5.");
+    }
+    else // else que garante que a escolha do item seja válida
+    {
+
+    switch(item) //atribuição de valor conforme o item selecionado
+    {
+    case 1:
+        valor = 7.50;
+        break;
+    case 2:
+        valor = 8.68;
+        break;
+    case 3:
+        valor = 5.00;
+        break;
+    case 4:
+        valor = 4.50;
+        break;
+    case 5:
+        valor = 3.25;
+        break;
+    }
+
+    printf("\nPreço unitário: R$%.2f. Quantas unidades você gostaria? \n-> ",valor);
+    scanf("%d", &qntd);
+    if(qntd < 1) // se a quantidade for inválida o programa se encerra
+    {
+        printf("Número inválido. Quantidade precisa ser maior que 0.");
+    }
+    else //else que garante que a quantidade seja maior que 0
+    {
+
+    precototal = valor * qntd;
+    printf("Preço total: %.2f.\n", precototal);
+
+    printf("\nQual será o método de pagamento?\n (1) para a prazo (até 12x).\n (2) para a vista com desconto.\n-> "); // menu de opções de pagamento
+    scanf("%d",&pagamento);
+
+    switch(pagamento)
+    {
+    case 1: //Método de pagamento parcelado. Se essa opção for escolhida, não haverá inserto de pagamento nem cálculo de troco, pois é feito no cartão de crédito.
+        printf("\nQuantas parcelas?\n->");
+        scanf("%d",&parcelas);
+        if(parcelas > 0 && parcelas <= 3)
+        {
+            precofinal = precototal * 1.05;
+            valorparcela = precofinal / parcelas;
+            variacao = precototal * 0.05;
+        }
+        else if(parcelas > 3 && parcelas <= 12)
+        {
+            precofinal = precototal * 1.08;
+            valorparcela = precototal / parcelas;
+            variacao = precototal * 0.08;
+        }
+        else
+        {
+            printf("\nNúmero de parcelas inválido. Precisa ser entre 1 e 12.\n"); // se a quantidade for inválida o programa se encerra
+        }
+            printf("\nO preço final é R$%.2f, com R$%.2f de acréscimo, e o preço da primeira parcela é R$%.2f.",precofinal, variacao, valorparcela);
+            printf("\nPagamento parcelado apenas por cartão.\n");
+        break;
+    case 2:
+        if(precototal <= 50)
+        {
+            precofinal = precototal * 0.95;
+            variacao = precototal * 0.05;
+        }
+        else if(precototal > 50 && precototal < 100)
+        {
+            precofinal = precototal * 0.90;
+            variacao = precototal * 0.10;
+        }
+        else
+        {
+            precofinal = precototal * 0.82;
+            variacao = precototal * 0.18;
+        }
+
+        printf("\nO preço final é R$%.2f, com R$%.2f de desconto.", precofinal, variacao);
+        // Pagamento para a vista
+        printf("\nInsira o valor pago pelo cliente: \n-> ");
+        scanf("%f",&valorpago);
+        if(valorpago >= precofinal)
+        {
+            printf("\nO troco do cliente é: R$%.2f.\n",valorpago - precofinal);
+        }
+        else
+        {
+            printf("\nPagamento inválido! Faltam R$%.2f.\n",precofinal - valorpago);
+        }
+        break;
+    default:
+        printf("\nInválido! Selecione 1 ou 2."); // se a opção de pagamento for inválida o programa se encerra
+    } //fechamento do switch
+    } //fechamento do else que garante que a quantidade seja maior que 0
+    } // fechamento do else que garante que a escolha do item seja válida
+
+    return 0;
+}
