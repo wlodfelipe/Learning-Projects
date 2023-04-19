@@ -1,0 +1,468 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <locale.h>
+#include <string.h>
+#include <time.h>
+#include <math.h>
+
+int contador_compras = 0; // acompanha quantas compras foram feitas, é utilizada em mais de uma função e é zerada depois de um pagamento
+int indice = 0; // indice é uma variavel global pois é utilizada em varias funções. Sabendo disso, quando ela for utilizada em uma função, terá de ser atribuida o valor 0, para caso tenha sido modificado em outra função anterior.
+int indice_aux = 0; // indice auxiliar para gravar informação no recibo
+int vendas_totais = 0; // INDICE da auxiliar que vai mostrar quantos itens foram vendidos no fim do dia. Se trata do desafio, não do recibo! não será zerada até que o programa feche
+int continuar = 0; // verificador padrao na opção de voltar a fazer uma compra/cadastrar. Usado em multiplas funções
+
+// declaração de todas as funções que serão desenvolvidas em baixo da main.
+void primeiro_menu();
+void escolha();
+void menu_venda();
+void visualizar_estoque();
+void sair();
+void cadastrar_estoque();
+void pagamento();
+int validar(int opcao, int minimo, int maximo);
+
+// criação do tipo estoque
+struct estoque
+{
+    char nome_item[50];
+    int codigo_item;
+    float preco_item;
+    int quantidade_item;
+    float subtotal;
+    int quantidade_vendida;
+};
+
+// inicialização dos elementos do vetor estoque_item.
+struct estoque estoque_item[] =
+{
+    [0].nome_item = "Pão de forma  ", // nomes estao cheios de espaços pra encaixar no menu que exibe.
+    [0].codigo_item = 1,
+    [0].preco_item = 7.50,
+    [0].quantidade_item = 0,
+    [0].subtotal = 0,
+    [0].quantidade_vendida = 0,
+
+    [1].nome_item = "Pão de centeio",
+    [1].codigo_item = 2,
+    [1].preco_item = 8.69,
+    [1].quantidade_item = 0,
+    [1].subtotal = 0,
+    [1].quantidade_vendida = 0,
+
+    [2].nome_item = "Broa de milho ",
+    [2].codigo_item = 3,
+    [2].preco_item = 5.00,
+    [2].quantidade_item = 0,
+    [2].subtotal = 0,
+    [2].quantidade_vendida = 0,
+
+    [3].nome_item = "Sonho         ",
+    [3].codigo_item = 4,
+    [3].preco_item = 4.50,
+    [3].quantidade_item = 0,
+    [3].subtotal = 0,
+    [3].quantidade_vendida = 0,
+
+    [4].nome_item = "Tubaína       ",
+    [4].codigo_item = 5,
+    [4].preco_item = 3.25,
+    [4].quantidade_item = 0,
+    [4].subtotal = 0,
+    [4].quantidade_vendida = 0
+};
+
+struct estoque ordem_recibo[50]; // auxiliar usado para gravar as informações de cada compra, como nome do item e valor da compra.
+// se fosse possível, seu tamanho seria de "indice_aux + 1", porém como se trata de uma variável global ele não pode ter uma variável como tamanho.
+// escolhemos o tamanho 50 arbitrariamente
+
+struct estoque vendas_do_dia[50]; // auxiliar para o desafio de mostrar o total de vendas realizadas antes do programa fechar.
+
+int main()
+{
+
+    setlocale(LC_ALL, "Portuguese"); // possibilita o uso de caracteres como ç ~ é
+
+    primeiro_menu(); // exibe o primeiro menu
+    escolha(); // exibe e executa as linhas dentro da função "escolha()", que funciona como um ponto de ramificação para outras funções.
+
+    // depois de chegar ao fim da função escolhida na "escolha()", pergunta se deseja voltar ao menu ou finalizar a compra.
+    printf("Deseja voltar para o menu principal? \n[1] para voltar ao menu. \n[2] para finalizar.\n");
+    int retorno = 0;
+    retorno = validar(retorno, 1, 2); // pede o numero 1 ou 2 e retorna somente quando um desses for escolhido.
+
+    if (retorno == 1)
+    {
+        main(); // chama a main novamente, repetindo todos os processos anteriores.
+    }
+    else if (retorno == 2)
+    {
+        if (contador_compras >= 1) // essa variavel só aumenta caso tenha sido feito uma compra, ou seja precisa do pagamento.
+        {
+            pagamento();
+        }
+        else
+        {
+            printf("Finalizando sem nenhuma compra feita.\n");
+        }
+    }
+
+    sair(); // chama o finalizador
+
+    return 0;
+}
+gets
+
+int validar(int opcao, int minimo, int maximo) // função diferencial, de tamanho dinâmico e recursiva. Apenas para ints!!
+{
+    scanf("%d",&opcao);
+    if (opcao < minimo || opcao > maximo)
+    {
+        getchar(); // evita loop infinito caso um char seja digitado
+        printf("Inválido! Insira de %i até %i.\n-> ", minimo, maximo);
+        return validar(opcao, minimo, maximo);
+    }
+    return opcao;
+}
+// seus argumentos sao: a variavel qual se quer atribuir um valor, o valor minimo permitido e o valor máximo permitido.
+
+void primeiro_menu()
+{
+    const time_t timer = time(NULL);
+
+    printf("\n");
+    printf("|---------------------------|\n");
+    printf("|  1   | Cadastrar Estoque  |\n");
+    printf("|  2   | Visualizar Estoque |\n");
+    printf("|  3   | Realizar venda     |\n");
+    printf("|  4   | Sair               |\n");
+    printf("|---------------------------|\n");
+    printf("\nGrupo13 Enterprises ltda  v2.1                      %s", ctime(&timer)); // mostra o dia, mes e horário
+    printf("Digite um código para entrar em seu respectivo menu.\n-> ");
+
+    return;
+}
+
+void sair()
+{
+    if (vendas_totais > 0)
+    {
+        printf("As vendas foram:\n");
+        for (int i = 0; i < vendas_totais; i++)
+        {
+            printf("Item: %s Unidades vendidas: %i\n",vendas_do_dia[i].nome_item, vendas_do_dia[i].quantidade_vendida);
+        }
+    }
+    printf("Finalizando...\n");
+    exit(0);
+}
+
+void escolha()
+{
+    int cod = 0;
+    cod = validar(cod, 1, 4);
+
+    switch (cod)
+    {
+        case 1: cadastrar_estoque();
+        break;
+
+        case 2: printf("\nO estoque é:\n"); visualizar_estoque();
+        break;
+
+        case 3: menu_venda();
+        break;
+
+        case 4: sair();
+        break;
+    }
+
+    return;
+}
+
+void menu_venda()
+{
+    float preco_total = 0;
+    float preco_final = 0;
+
+    continuar = 0; // variaveis globais precisam ser zeradas
+    indice = 0;
+
+    int verificar_estoque = 0;
+
+    for (int i = 0; i < 5; i++) // soma o total de itens geral no estoque
+    {
+        verificar_estoque += estoque_item[i].quantidade_item;
+    }
+
+    if (verificar_estoque == 0)
+    {
+        printf("Nada no estoque!\n");
+        return;
+    }
+
+    visualizar_estoque();
+
+    printf("Bem vindo a Padaria da Berenice.\n");
+    printf("Selecione um item por vez.\n-> ");
+
+    indice = validar(indice, 1, 6); // verifica qual item foi escolhido para a venda
+    if (indice == 6)
+    {
+        return; // ou main();
+    }
+    indice--; // precisa ser retirado 1 do valor pego pelo validar, pois estamos tratando de indice do vetor.
+
+    if (estoque_item[indice].quantidade_item < 1) // verifica se há estoque do item selecionado
+    {
+        printf("Nenhuma unidade deste item no estoque!\n");
+        printf("Deseja tentar realizar outra venda? \n[1] para sim. \n[2] para não.\n-> "); // item 4.3 do requerimento
+        continuar = validar(continuar, 1, 2);
+
+        if (continuar == 1)
+        {
+            menu_venda();
+        }
+        else if (continuar == 2)
+        {
+            return;
+        }
+    }
+    else
+    {
+        printf("\nPreço unitário: R$%.2f.\n",estoque_item[indice].preco_item); // exibe o preço unitário.
+
+        printf("Selecione a quantidade a ser vendida. Ps: estoque: %i\n-> ", estoque_item[indice].quantidade_item); // mostra o estoque para melhor nortear a venda.
+
+        estoque_item[indice].quantidade_vendida = validar(estoque_item[indice].quantidade_vendida, 1, estoque_item[indice].quantidade_item); // garante que a quantidade escolhida seja maior que 0 e que esteja dentro do estoque
+
+        preco_total = estoque_item[indice].preco_item * estoque_item[indice].quantidade_vendida; // calcula o preço total da compra
+        estoque_item[indice].quantidade_item -= estoque_item[indice].quantidade_vendida; // retira do estoque
+        ordem_recibo[indice_aux] = estoque_item[indice]; // grava o que foi comprado na interaçao n
+        ordem_recibo[indice_aux].subtotal = preco_total; // grava o valor da compra
+        indice_aux++; // grante que na próxima interação, será gravado no espaço n+1
+
+        printf("Preço total: R$%.2f.\n", preco_total); // exibe o preço total da compra
+        contador_compras++; // vai conversar com a main dizendo que é necessário um pagamento
+
+        printf("Deseja realizar mais uma venda? \n[1] para sim \n[2] para não.\n-> ");
+        continuar = validar(continuar, 1, 2);
+
+        if (continuar == 1)
+        {
+            menu_venda();
+        }
+        else if (continuar == 2)
+        {
+            return;
+        }
+
+    } // else
+    return;
+}
+
+void visualizar_estoque()
+{
+    printf("Codigo |   Nome          | Valor |Estoque\n");
+    for (int i = 0; i < 5; i++)
+    {
+        printf("   %i   | %s  |R$%.2f |   %i   \n",estoque_item[i].codigo_item, estoque_item[i].nome_item, estoque_item[i].preco_item, estoque_item[i].quantidade_item);
+    }
+    printf("\n6 - Retornar ao menu principal.\n\n");
+}
+
+void cadastrar_estoque()
+{
+    printf("O estoque é:\n\n");
+    visualizar_estoque();
+
+    int codigo_alterar_estoque = 0;
+    int unidades = 0;
+
+    continuar = 0;
+    indice = 0;
+
+    printf("Digite o código do produto que se deseja alterar o estoque.\n-> ");
+
+    indice = validar(indice, 1, 6);
+    if (indice == 6)
+    {
+        return; // ou main();
+    }
+    else
+    indice--; // precisa ser retirado 1 do valor pego pelo validar, pois estamos tratando de indice do vetor.
+
+    printf("Item escolhido: %s \nQuantidade disponível no momento: %i \n", estoque_item[indice].nome_item, estoque_item[indice].quantidade_item);
+    printf("Deseja cadastrar quantas unidades para o estoque?\n-> ");
+
+    unidades = validar(unidades, 0, 9999);
+
+    estoque_item[indice].quantidade_item += unidades; // linha onde o cadastro é efetivado
+
+    printf("Deseja continuar cadastrando? \n[1] para sim \n[2] para não.\n-> ");
+    continuar = validar(continuar, 1, 2);
+
+    if (continuar == 1)
+    {
+        cadastrar_estoque();
+    }
+    else if (continuar == 2)
+    {
+        if (unidades == 0) // falta comentar
+        {
+            return; // ou return
+        }
+    }
+
+}
+
+void pagamento()
+{
+    int opcao_pagamento = 0;
+    int parcelas = 0;
+    float variacao = 0;
+    float valor_parcela = 0;
+    float valor_pago = 0;
+    struct estoque temp; // variavel auxiliar do tipo estoque
+    float total = 0;
+    float preco_final = 0;
+    int opcao_vista = 0;
+    int voltar_sair = 0;
+
+    for (int cont = 1; cont < indice_aux; cont++) // bubble sorting para mostrar os valores ordenados
+    {
+        for (int i = 0; i < indice_aux - 1; i++) // atenção no '<', ordena no maior pro menor
+        {
+            if (ordem_recibo[i].subtotal < ordem_recibo[i+1].subtotal)
+            {
+                temp = ordem_recibo[i];
+                ordem_recibo[i] = ordem_recibo[i+1];
+                ordem_recibo[i+1] = temp;
+            }
+        }
+    }
+
+    printf("O total da venda foi:\n\n"); // mostrar o recibo
+    for (int i = 0; i < indice_aux; i++)
+    {
+        printf("Item %i : %s  unitário: R$%.2f x %i: R$%.2f \n", i+1, ordem_recibo[i].nome_item, ordem_recibo[i].preco_item, ordem_recibo[i].quantidade_vendida, ordem_recibo[i].subtotal);
+        total += ordem_recibo[i].subtotal; // variavel total recebe a soma de todos os subtotais
+        // as duas linhas abaixo pegam informação para o desafio
+        vendas_do_dia[vendas_totais] = ordem_recibo[i]; // guarda os itens comprados, mas não zera depois de cada compra.
+        vendas_totais++; // começa do 0 e vai sendo aumentada para conversar com o vetor da vendas_do_dia. Essa variavel não será zerada até o programa ser fechado
+    }
+    printf("                          Valor total a pagar: R$%.2f\n", total); // apresenta a soma dos subtotais
+
+    printf("\nQual será o método de pagamento?\n [1] para a prazo no cartão de crédito (até 12x).\n [2] para à vista com desconto.\n-> ");
+    opcao_pagamento = validar(opcao_pagamento, 1, 2);
+
+    switch (opcao_pagamento)
+    {
+        case 1: // método a prazo, não calcula troco por ser no cartão
+            printf("Selecione quantas parcelas.\n-> ");
+            parcelas = validar(parcelas, 1, 12); // ----
+
+            if (parcelas <= 3) // nao é preciso colocar o && > 0 pois a função 'validar' garante que o número inserido não seja 0.
+            {
+                preco_final = total * 1.05; // acréscimo de 5%
+                valor_parcela = preco_final / parcelas;
+                variacao = total * 0.05;
+            }
+            else if (parcelas > 3) // nao é preciso colocar o && < 12 pois a função 'validar' garante que o número inserido seja igual ou menor que 12.
+            {
+                preco_final = total * 1.08; // acréscimo de 8%
+                valor_parcela = preco_final / parcelas;
+                variacao = total * 0.08;
+            }
+
+            printf("\nO preço final é R$%.2f, com R$%.2f de acréscimo, e o preço da primeira parcela é R$%.2f.\n",preco_final, variacao, valor_parcela);
+
+        break;
+
+        case 2: // método à vista com desconto, será calculado troco.
+            if (total <= 50)
+            {
+                preco_final = total * 0.95; // desconta 5%
+                variacao = total * 0.05;
+            }
+            else if (total > 50 && total < 100)
+            {
+                preco_final = total * 0.90; // desconta 10%
+                variacao = total * 0.10;
+            }
+            else
+            {
+                preco_final = total * 0.82; // desconta 18%
+                variacao = total * 0.18;
+            }
+
+            preco_final = round(preco_final * 100.0) / 100.0; // arredonda para ter apenas 2 casas decimais
+
+            printf("\nO preço final é R$%.2f, com R$%.2f de desconto.\n", preco_final, variacao);
+            printf("Como deseja fazer o pagamento? \n[1] Cartão de crédito/débito. \n[2] Dinheiro.\n-> ");
+            opcao_vista = validar(opcao_vista, 1, 2); // retorna a opção escolhida, entre 1 a 2 apenas.
+            if (opcao_vista == 1)
+            {
+                printf("Pagamento efetuado. Obrigado e volte sempre! Compra finalizada.\n");
+            }
+            else if (opcao_vista == 2)
+            {
+                int bool_teste = 0;
+                printf("\nInsira o valor pago pelo cliente: \n-> ");
+                do
+                {
+                    bool_teste = 0;
+                    scanf("%f",&valor_pago); // tivemos que utilizar esse scan f para um float :( nossa função "validar" retorna apenas inteiros.
+                    getchar();
+                    if (valor_pago < 0)
+                    {
+                        printf("Inválido, valor não pode ser menor que 0!\n");
+                        bool_teste++;
+                    }
+                }
+                while (bool_teste != 0);
+
+                if (valor_pago < preco_final)
+                {
+                    int refazer_pagamento = 0;
+                    printf("Valor insuficiente! Faltam R$%.2f.\n", preco_final - valor_pago);
+                    printf("Deseja refazer o pagamento? \n[1] para sim \n[2] para não.\n");
+                    refazer_pagamento = validar(refazer_pagamento, 1, 2);
+                    if (refazer_pagamento == 1)
+                    {
+                        return pagamento();
+                    }
+                    else if (refazer_pagamento == 2)
+                    {
+                        estoque_item[indice].quantidade_item += estoque_item[indice].quantidade_vendida; // devolve o item nao comprado para o estoque
+                        vendas_totais--; // retira a soma de itens vendidos
+                        return;
+                    }
+
+                }
+                else if (valor_pago > preco_final)
+                {
+                    printf("Pagamento efetuado! O troco é R$%.2f.\n", valor_pago - preco_final);
+                }
+                else if (valor_pago == preco_final)
+                {
+                    printf("Pagamento efetuado sem troco!\n");
+                }
+            }
+
+        }//switch
+
+    printf("[1] Voltar ao menu principal.\n[2] Sair.\n");
+    if (validar(voltar_sair, 1, 2) == 1)
+    {
+        for (int i = 0; i < indice_aux; i++)
+        {
+            ordem_recibo[i].quantidade_vendida = 0; // zera as informações armazenadas para que uma nova compra possa iniciar
+            ordem_recibo[i].subtotal = 0;
+        }
+        contador_compras = 0; // para caso for finalizado sem fazer uma segunda compra, nao pedir pagamento
+        indice_aux = 0;
+        main();
+    }
+
+        return;
+}
