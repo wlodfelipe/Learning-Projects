@@ -1,0 +1,6 @@
+
+
+Item 432 : xamblers  | Quantidade vendida: 3 | Quantidade no estoque: 81
+Item 123 : polenta  | Quantidade vendida: 10 | Quantidade no estoque: 50
+Item 123 : polenta  | Quantidade vendida: 10 | Quantidade no estoque: 50
+Item 432 : xamblers  | Quantidade vendida: 3 | Quantidade no estoque: 81

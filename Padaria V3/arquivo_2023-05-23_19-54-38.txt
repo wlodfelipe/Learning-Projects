@@ -1,0 +1,1 @@
+Item 666 : cafe  | Quantidade vendida: 125 | Quantidade no estoque: 250
