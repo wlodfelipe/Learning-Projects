@@ -1,2 +1,2 @@
-# Learning-Projects
-All my studies related projects. English and Portuguese.
+# C Learning-Projects
+Some of my C projects. English and Portuguese.
